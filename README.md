@@ -103,6 +103,8 @@ clienteSocket.close();
 ### Exemplo Completo de Cliente
 
 ```java
+package sockets.thread;  // ⚠️ Usando mesmo pacote das classes modelo
+
 import java.io.*;
 import java.net.Socket;
 import java.util.List;
@@ -193,10 +195,44 @@ List<ContadorGrupo> ranking = (List<ContadorGrupo>) entrada.readObject();
 List<LogGrupo> logs = (List<LogGrupo>) entrada.readObject();
 ```
 
-## Modelos de Dados (Classes a Implementar no Cliente)
+## ⚠️ IMPORTANTE: Configuração de Serialização no Cliente
+
+### Problema da Serialização
+Ao criar um projeto cliente separado, você pode encontrar o erro:
+```
+java.io.InvalidClassException: serialVersionUID mismatch
+```
+
+**Motivo:** Quando classes `Serializable` são compiladas separadamente em projetos diferentes, o Java gera automaticamente `serialVersionUID` distintos, causando incompatibilidade na deserialização.
+
+### ✅ **SOLUÇÃO 1: Manter Estrutura de Pacotes (Recomendada)**
+Copie as classes **EXATAMENTE** como estão no servidor, mantendo a estrutura de pacotes:
+
+**Estrutura no Cliente:**
+```
+src/
+└── sockets/
+    └── thread/
+        ├── ContadorGrupo.java  (cópia idêntica)
+        └── LogGrupo.java       (cópia idêntica)
+```
+
+### ✅ **SOLUÇÃO 2: serialVersionUID Explícito**
+Se não puder manter a estrutura de pacotes, adicione `serialVersionUID = 1L` em ambas as classes do servidor e cliente:
+
+```java
+public class ContadorGrupo implements Serializable {
+    private static final long serialVersionUID = 1L;
+    // ... resto da classe
+}
+```
+
+## Modelos de Dados (Classes para o Cliente)
 
 ### ContadorGrupo
 ```java
+package sockets.thread;  // ⚠️ OBRIGATÓRIO: Manter mesmo pacote
+
 import java.io.Serializable;
 
 public class ContadorGrupo implements Serializable {
@@ -229,6 +265,8 @@ public class ContadorGrupo implements Serializable {
 
 ### LogGrupo
 ```java
+package sockets.thread;  // ⚠️ OBRIGATÓRIO: Manter mesmo pacote
+
 import java.io.Serializable;
 
 public class LogGrupo implements Serializable {
@@ -322,10 +360,30 @@ Aguardando conexões...
 - **Formato de Data** - `SimpleDateFormat("yyyy-MM-dd HH:mm:ss")`
 - **TCP Sockets** - Comunicação confiável cliente-servidor
 
+## Estrutura de Projeto Cliente
+
+### Compilação Recomendada
+```bash
+# Estrutura do projeto cliente
+ClienteProjetoTeste/
+├── src/
+│   └── sockets/
+│       └── thread/
+│           ├── ContadorGrupo.java     (copiado do servidor)
+│           ├── LogGrupo.java          (copiado do servidor)
+│           └── ClienteExemplo.java    (sua implementação)
+
+# Compilar
+javac -cp src src/sockets/thread/*.java
+
+# Executar
+java -cp src sockets.thread.ClienteExemplo
+```
+
 ## Checklist para Implementação do Cliente
 
 ### ✅ Antes de Conectar
-- [ ] Implementar classes `ContadorGrupo` e `LogGrupo` idênticas ao servidor
+- [ ] Copiar classes `ContadorGrupo` e `LogGrupo` **COM estrutura de pacotes**
 - [ ] Definir ID do grupo desejado (1-10)
 - [ ] Configurar IP e porta do servidor
 
@@ -351,4 +409,7 @@ Aguardando conexões...
 4. **Persistência:** Dados mantidos em memória durante execução do servidor
 5. **Validação:** IDs fora do range 1-10 resultam em conexão fechada
 6. **Logs Filtrados:** Cliente recebe apenas logs do grupo solicitado
-7. **Serialização:** Classes devem implementar `Serializable` corretamente 
+7. **⚠️ CRÍTICO - Serialização:** Classes devem ser **IDÊNTICAS** entre servidor e cliente
+   - **Mesmo pacote:** `sockets.thread`
+   - **Mesmo código:** Copie os arquivos exatos do servidor
+   - **Alternativa:** Use `serialVersionUID = 1L` explícito em ambos os projetos
