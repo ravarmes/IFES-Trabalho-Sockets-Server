@@ -3,7 +3,6 @@ package sockets.thread;
 import java.io.Serializable;
 
 public class LogGrupo implements Serializable {
-    private static final long serialVersionUID = 1L;
     private int idGrupo;
     private String timestamp;
 
